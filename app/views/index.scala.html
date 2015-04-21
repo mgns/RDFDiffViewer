@@ -3,75 +3,62 @@
 @main("DBpedia-diff") {
 
     <div class="container">
-    	<div class="starter-template">
-	        <h1>@controllers.Application.decodeEntity(resource)</h1>
-	        <p class="lead"><a href="http://dbpedia.org/page/@resource">
-	        http://dbpedia.org/page/@controllers.Application.decodeEntity(resource)
-	        </a></p>
-	        <p>
-	        	<div class="dropdown">
-		        <button class="btn btn-default dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">Choose version
-		        <span class="caret"></span></button>
-		        <ul id="versionsel" class="dropdown-menu" role="menu" aria-labelledby="menu1">
-			      @for(version <- versions) {
-			      	<li role="presentation"><a role="menuitem" tabindex="-1" href="#">@version</a></li>
-			      }
-		        </ul>
-		      </div>
-		    </div>
-	        </p>
-			<p>
-			   <div id="tripleListPlaceholder"></div>
-			</p>
-		</div>
+        <div class="starter-template">
+            <h1>@controllers.Application.decodeEntity(resource)</h1>
+            <p class="lead"><a href="http://dbpedia.org/page/@resource">
+                http://dbpedia.org/page/@controllers.Application.decodeEntity(resource)
+            </a></p>
+            <p>
+            <div class="dropdown inline" style="float:right" >
+                <button class="btn btn-default dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">
+                    Choose version
+                    <span class="caret"></span></button>
+                <ul id="versionselRight" class="dropdown-menu" role="menu" aria-labelledby="menu1">
+                @for(version <- versions) {
+                    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">@version</a></li>
+                }
+                </ul>
+            </div>
+            <div class="dropdown inline">
+                <button class="btn btn-default dropdown-toggle" type="button" id="menu2" data-toggle="dropdown">
+                    Choose version
+                    <span class="caret"></span></button>
+                <ul id="versionselLeft" class="dropdown-menu" role="menu" aria-labelledby="menu2">
+                @for(version <- versions) {
+                    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">@version</a></li>
+                }
+                </ul>
+            </div>
+            <div id="tripleListPlaceholder"></div>
+        </div>
+
     </div>
-    
-    
-    <!--Template for the tripletable. To be filled by underscore.js-->
-    <script type="text/html" id='tripleListTemplate'>
-    	<div>
-        	<table class="table table-striped">
-	        	<thead>
-		            <tr>
-		                <th>State</th>
-		                <th>Predicate</th>
-		                <th>Object</th>
-		            </tr>
-		        </thead>
-		        <tbody>
-			        <% _.each(data,function(triple,key,list){ 
-			        	<!-- get an icon according to change status. -->
-			        	var img = "";
-			        	if(triple.state==="insertion")
-			            	img = '<image src="@routes.Assets.at("images/famfamfam/add.png")">';
-			            if(triple.state==="deletion")
-			            	img = '<image src="@routes.Assets.at("images/famfamfam/delete.png")">';
-			            if(triple.state==="changed")
-			            	img = '<image src="@routes.Assets.at("images/famfamfam/pencil.png")">';
-			            //"unchanged" has no image
-			        %>
-			            <tr>
-			                <!-- prints property and object. struck out if triple is deleted. -->
-			                <!-- TODO: move strucking out/entity linking to external function  -->
-			                <td><% print(img) %></td>
-			                <td>
-			                <% if (triple.state==="deletion")  { %><del> <% } %>
-			                <% if (triple.propertyIRI) { %><a href = <%= triple.propertyIRI%>> <% } %>
-			                <%= triple.property %>
-			                <% if (triple.propertyIRI) { %></a> <% } %>
-			                <% if (triple.state==="deletion") { %></del> <% } %>
-			                </td>
-			                <td>
-			                <% if (triple.state==="deletion") { %><del> <% } %>
-			                <% if (triple.objectIRI) { %><a href = <%= triple.objectIRI%>> <% } %>
-			                <%= triple.object %>
-			                <% if (triple.objectIRI) { %></a> <% } %>
-			                <% if (triple.state==="deletion") { %></del> <% } %>
-			                </td>
-			            </tr>
-			        <% }); %>
-			    </tbody>
-			</table>
-		</div>
-	</script>
+
+<script type="text/html" id='tripleListTemplate'>
+    <table class="table">
+    <thead><tr>
+        <th class="col-md-6"></th>
+        <th class="heading"></th>
+        <th class="col-md-6"></th>
+    </tr></thead>
+        <% _.each(data,function(group,key,list){ %>
+        <tbody>
+
+            <tr class="heading"><td colspan="3"><%= group.key.plain%></td></tr>
+            <% _.each(group.values,function(value,keyV,listV){ %>
+                <% if (!value.right && compareMode) { %>
+                    <tr><td class="right"><%= value.plain%></td>
+                    <td><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
+                    <td></td></tr> <% }
+                else if (!value.left && compareMode) { %>
+                    <tr><td></td>
+                    <td><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
+                    <td><%= value.plain%></td></tr> <% }
+                else { %>
+                    <tr><td colspan="3" class="commonEntry"><%= value.plain%></td></tr> <% } %>
+            <% }); %>
+        </tbody>
+        <% }); %>
+    </table>
+</script>
 }

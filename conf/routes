@@ -7,7 +7,6 @@ GET     /assets/*file               controllers.Assets.at(path="/public", file)
 
 # Home page
 GET     /:entity                    controllers.Application.site(entity:String)
-GET     /:entity/:version           controllers.Application.triples(entity:String, version:String)
-GET     /plain/:entity/:version     controllers.Application.plain(entity:String, version:String)
+GET     /:entity/:version/plain  controllers.Application.plain(entity:String, version:String)
 
 GET     /                           controllers.Application.title()

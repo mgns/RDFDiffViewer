@@ -12,7 +12,6 @@ import java.util.List;
 import models.Triple;
 import play.Logger;
 import play.Play;
-import play.libs.Json;
 import play.mvc.Controller;
 import play.mvc.Result;
 import views.html.index;
@@ -40,22 +39,6 @@ public class Application extends Controller {
     		return notFound("The entity " + entity + " does not exist in any version of DBpedia.");
     	}
         return ok(index.render(encodedEntity, versions));
-    }
-    
-    /**
-     * Generates a JSON of triples
-     * @param entity
-     * @param version
-     * @return
-     * @throws IOException
-     */
-    public static Result triples(String entity, String version) throws IOException {
-        Logger.info("Entity: " + entity + " Version: " + version);
-
-    	String encodedEntity = encodeEntity(entity);
-
-        List<Triple> triples = Triple.getTriplesFromFileSystem(encodedEntity, version);
-    	return ok(Json.toJson(triples));
     }
 
     public static Result plain(String entity, String version) throws IOException {
