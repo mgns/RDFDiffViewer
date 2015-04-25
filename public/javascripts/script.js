@@ -93,20 +93,24 @@ function getTriples(version) {
     var path = window.location.pathname + "/" + version + "/plain";
     var plainTriples = httpGet(path);
     var triples = parser.parse(plainTriples);
-    resolvePrefixes(triples);
+    postprocessParsedTriples(triples);
     return triples;
 }
 
 /**
- * Visits each node of the given object and resolves prefix and suffix to the full URI, written to attribute "plain"
+ * Visits each node of the given object and modifies information after peg.js parsing
+ * 1. Prefix and suffix to the full URI are written to attribute "plain".
+ * 2. If the object is a RDF literal, the escaped quotation marks are unescaped
  * @param object
  */
-function resolvePrefixes(object) {
+function postprocessParsedTriples(object) {
     if( typeof object == "object" ) {
         if(typeof object.prefix !== "undefined")
             object.plain = prefixes[object.prefix] + object.suffix;
+        if(object.node === "literal")
+            object.plain = object.plain.replace(/\\,"/g, '"');
         $.each(object, function(k,v) {
-            resolvePrefixes(v);
+            postprocessParsedTriples(v);
         });
     }
 }
