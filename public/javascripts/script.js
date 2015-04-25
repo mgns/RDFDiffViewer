@@ -1,19 +1,20 @@
-var versionLeft, versionRight;
+var loadedTriples = {"left":null, "right":null};
+var byObject = false;
 
 /**
  * When the version selector for the left side of the table has been clicked
  */
 $('#versionselLeft li').on('click', function(){
-	versionLeft = $(this).text();
-    update(versionLeft, $(this));
+    var version = versionSelectorClicked($(this));
+    getTriples(version, "left");
 });
 
 /**
  * When the version selector for the right side of the table has been clicked
  */
 $('#versionselRight li').on('click', function(){
-    versionRight = $(this).text();
-    update(versionRight, $(this));
+    var version = versionSelectorClicked($(this));
+    getTriples(version, "right");
 });
 
 /**
@@ -21,9 +22,10 @@ $('#versionselRight li').on('click', function(){
  * @param version   the new version
  * @param selector  the selector that has been changed
  */
-function update(version, selector) {
+function versionSelectorClicked(selector) {
+    var version = selector.text();
     updateVersionSelector(version, selector);
-    updateTriples(versionLeft, versionRight, false);
+    return version;
 }
 
 /**
@@ -41,9 +43,9 @@ function updateVersionSelector(version, element) {
  * @param versionRight  right selected version or undefined, if none
  * @param byObject      true means grouping by object, otherwise grouping by predicate
  */
-function updateTriples(versionLeft, versionRight, byObject) {
-    var leftTriplesGrouped = getGroupedTriples(versionLeft, byObject);
-    var rightTriplesGrouped =  getGroupedTriples(versionRight, byObject);
+function update() {
+    var leftTriplesGrouped = groupTriples(loadedTriples.left, byObject);
+    var rightTriplesGrouped =  groupTriples(loadedTriples.right, byObject);
     if(leftTriplesGrouped !== null && rightTriplesGrouped !== null) {   //two versions are selected, compare between them
         var mergedGroups = compareGroups(leftTriplesGrouped, rightTriplesGrouped);
         renderTable(mergedGroups, true);
@@ -71,30 +73,18 @@ function renderTable(mergedGroups, compareMode) {
 }
 
 /**
- *
+ * Loads triples for the given entity and version from the server, parses them and triggers the table rendering
  * @param version
- * @param byObject
- * @returns {*}
+ * @param attribute     the index within loadedTriples to store the triples
  */
-function getGroupedTriples(version, byObject) {
-    if(version === undefined)
-        return null;
-    var triples = getTriples(version);
-    var triplesGrouped = groupTriples(triples, byObject);
-    return triplesGrouped;
-}
-
-/**
- * Loads triples for the given entity and version from the server and parses them
- * @param version
- * @returns {*}
- */
-function getTriples(version) {
+function getTriples(version, attribute) {
     var path = window.location.pathname + "/" + version + "/plain";
-    var plainTriples = httpGet(path);
-    var triples = parser.parse(plainTriples);
-    postprocessParsedTriples(triples);
-    return triples;
+    $.get( path, function( data ) {
+        var triples = parser.parse(data);
+        postprocessParsedTriples(triples);
+        loadedTriples[attribute] = triples;
+        update();
+    } );
 }
 
 /**
@@ -120,9 +110,11 @@ function postprocessParsedTriples(object) {
  *
  * @param triples   triples in form of [{predicate:..., object:...}, {predicate:..., object:...}, ...]
  * @param byObject  if true, group per object, otherwise by predicate
- * @returns {Array} of form [{key:..., values:[...]}, {key:..., values:[...]}, ...]
+ * @returns {Array} of form [{key:..., values:[...]}, {key:..., values:[...]}, ...]. null if given triples are null
  */
 function groupTriples(triples, byObject) {
+    if(triples === null)
+        return null;
     //the view should be groupable by predicate or by object. Therefore, the mapping which is created here has either predicate or object as key.
     //to simplify comparisons of two versions, for each of the versions all keys and their respective values are sorted alphabetically
 
@@ -275,19 +267,6 @@ function compareGroups(leftTriplesGrouped, rightTriplesGrouped) {
             group.values[i].right = true;
         result.push(group);
     }
-}
-
-/**
- * Helper for HTTP GET
- * @param theUrl    url to get
- * @returns {string}    plain result text
- */
-function httpGet(theUrl)
-{
-    var xmlHttp = new XMLHttpRequest();
-    xmlHttp.open( "GET", theUrl, false );
-    xmlHttp.send( null );
-    return xmlHttp.responseText;
 }
 
 var prefixes = {
