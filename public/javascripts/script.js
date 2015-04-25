@@ -29,15 +29,6 @@ function versionSelectorClicked(selector) {
 }
 
 /**
- * Updates the text of the version selector
- * @param version
- * @param element
- */
-function updateVersionSelector(version, element) {
-	element.parents('.dropdown').find('.dropdown-toggle').html(version+' <span class="caret"></span>');
-}
-
-/**
  * Updates triples and decides whether to display the view for a single selected version or a diff view for two versions
  * @param versionLeft   left selected version or undefined, if none
  * @param versionRight  right selected version or undefined, if none
@@ -70,6 +61,7 @@ function renderTable(mergedGroups, compareMode) {
     var valueTemplate = _.template($('#valueTemplate').html());
     // render the table
     tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueTemplate:valueTemplate}));
+    initializeSwitch();
 }
 
 /**
@@ -267,6 +259,37 @@ function compareGroups(leftTriplesGrouped, rightTriplesGrouped) {
             group.values[i].right = true;
         result.push(group);
     }
+}
+
+/**
+ * Initializes the switch to toggle between object-wise and predicate-wise grouping, this happens
+ * only the first time the function is called
+ */
+function initializeSwitch() {
+    var theSwitch = $("[name='group-by-checkbox']");
+    if(theSwitch.parent().css('visibility') == 'hidden') {
+        theSwitch.parent().css('visibility', 'visible');
+        theSwitch.bootstrapSwitch({
+            onText: 'Object',
+            offText: 'Predicate',
+            onColor: 'success',
+            offColor: 'primary'
+        });
+        theSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+            console.log(state);
+            byObject = state;
+            update();
+        });
+    }
+}
+
+/**
+ * Updates the text of the version selector
+ * @param version
+ * @param element
+ */
+function updateVersionSelector(version, element) {
+    element.parents('.dropdown').find('.dropdown-toggle').html(version+' <span class="caret"></span>');
 }
 
 var prefixes = {
