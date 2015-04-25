@@ -36,9 +36,9 @@
     <script type="text/html" id='tripleListTemplate'>
         <table class="table">
         <thead><tr>
-            <th class="col-md-6"></th>
-            <th class="heading"></th>
-            <th class="col-md-6"></th>
+            <th class="col-md-5"></th>
+            <th class="col-md-1"></th>
+            <th class="col-md-5"></th>
         </tr></thead>
             <%
             _.each(data,function(group,key,list){ %>
@@ -49,14 +49,14 @@
                     var representation = valueTemplate({value:value});
                     if (!value.right && compareMode) { %>
                         <tr><td class="right"><%= representation%></td>
-                        <td><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
+                        <td class="center"><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
                         <td></td></tr> <% }
                     else if (!value.left && compareMode) { %>
                         <tr><td></td>
-                        <td><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
+                        <td class="center"><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
                         <td><%= representation%></td></tr> <% }
                     else { %>
-                        <tr><td colspan="3" class="commonEntry"><%= representation%></td></tr> <% } %>
+                        <tr><td colspan="3" class="center"><%= representation%></td></tr> <% } %>
                 <% }); %>
             </tbody>
             <% }); %>
