@@ -138,20 +138,11 @@ function groupTriples(triples, byObject) {
         if (expandedGroupKeys.hasOwnProperty(plainKey)) {
             var group = {};
             group.key = expandedGroupKeys[plainKey];
-            group.values = groupValues[plainKey];
-            group.values.sort(function(a, b){
-                if(a.plain < b.plain) return -1;
-                if(a.plain > b.plain) return 1;
-                return 0;
-            });
+            group.values = _.sortBy(groupValues[plainKey], 'plain');
             groups.push(group);
         }
     }
-    groups.sort(function(a, b){
-        if(a.key.plain < b.key.plain) return -1;
-        if(a.key.plain > b.key.plain) return 1;
-        return 0;
-    });
+    groups = _.sortBy(groups, function(group){return group.key.plain});
 
     return groups;
 }
