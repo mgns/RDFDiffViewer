@@ -31,34 +31,47 @@
             </div>
             <div id="tripleListPlaceholder"></div>
         </div>
-
     </div>
 
-<script type="text/html" id='tripleListTemplate'>
-    <table class="table">
-    <thead><tr>
-        <th class="col-md-6"></th>
-        <th class="heading"></th>
-        <th class="col-md-6"></th>
-    </tr></thead>
-        <% _.each(data,function(group,key,list){ %>
-        <tbody>
+    <script type="text/html" id='tripleListTemplate'>
+        <table class="table">
+        <thead><tr>
+            <th class="col-md-6"></th>
+            <th class="heading"></th>
+            <th class="col-md-6"></th>
+        </tr></thead>
+            <%
+            _.each(data,function(group,key,list){ %>
+            <tbody >
 
-            <tr class="heading"><td colspan="3"><%= group.key.plain%></td></tr>
-            <% _.each(group.values,function(value,keyV,listV){ %>
-                <% if (!value.right && compareMode) { %>
-                    <tr><td class="right"><%= value.plain%></td>
-                    <td><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
-                    <td></td></tr> <% }
-                else if (!value.left && compareMode) { %>
-                    <tr><td></td>
-                    <td><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
-                    <td><%= value.plain%></td></tr> <% }
-                else { %>
-                    <tr><td colspan="3" class="commonEntry"><%= value.plain%></td></tr> <% } %>
+                <tr class="heading"><td colspan="3"><%= valueTemplate({value:group.key})%></td></tr>
+                <% _.each(group.values,function(value,keyV,listV){
+                    var representation = valueTemplate({value:value});
+                    if (!value.right && compareMode) { %>
+                        <tr><td class="right"><%= representation%></td>
+                        <td><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
+                        <td></td></tr> <% }
+                    else if (!value.left && compareMode) { %>
+                        <tr><td></td>
+                        <td><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
+                        <td><%= representation%></td></tr> <% }
+                    else { %>
+                        <tr><td colspan="3" class="commonEntry"><%= representation%></td></tr> <% } %>
+                <% }); %>
+            </tbody>
             <% }); %>
-        </tbody>
-        <% }); %>
-    </table>
-</script>
+        </table>
+    </script>
+
+    <script type="text/html" id='valueTemplate'>
+        <% if(value.node === "iri") { %>
+            <a href ="<%=value.plain%>"> <% } %>
+        <% if(value.prefix !== undefined && value.suffix !== undefined) { %>
+            <%= value.prefix%>:<%=value.suffix%> <% }
+        else { %>
+            <%= value.plain %> <% } %>
+        <% if(value.node === "iri") { %>
+            </a> <% } %>
+    </script>
+
 }

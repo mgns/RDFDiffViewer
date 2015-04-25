@@ -60,12 +60,14 @@ function updateTriples(versionLeft, versionRight, byObject) {
  * @param compareMode   whether to display the view for a single selected version or a diff view for two versions
  */
 function renderTable(mergedGroups, compareMode) {
-    // empty current table
+    // get placeholder to render the table
     var tripleListPlaceholder = $('#tripleListPlaceholder');
-    // create template function
-    var elementTemplate = _.template($('#tripleListTemplate').html());
-    // render the template with the given data
-    tripleListPlaceholder.html(elementTemplate({data: mergedGroups, compareMode: compareMode}));
+    // create template function for table
+    var tripleListTemplate = _.template($('#tripleListTemplate').html());
+    // create template function for single values, to render a single literal or uri
+    var valueTemplate = _.template($('#valueTemplate').html());
+    // render the table
+    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueTemplate:valueTemplate}));
 }
 
 /**
