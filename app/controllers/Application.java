@@ -35,10 +35,11 @@ public class Application extends Controller {
         String encodedEntity = encodeEntity(entity);
 
         List<String> versions = Triple.getVersionsForEntity(encodedEntity);
+        List<String> allVersions =  Triple.getAllVersions();
     	if(versions.isEmpty()) {
     		return notFound("The entity " + entity + " does not exist in any version of DBpedia.");
     	}
-        return ok(index.render(encodedEntity, versions));
+        return ok(index.render(encodedEntity, versions, allVersions));
     }
 
     public static Result plain(String entity, String version) throws IOException {

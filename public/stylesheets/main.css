@@ -1,5 +1,10 @@
 .heading {text-align: center; font-weight: bold;}
 .center {text-align: center;}
 .right {text-align:right;}
-.inline {display:inline-block;}
+.inline {display:inline-block;margin-right: 30px;margin-bottom: 10px}
+.table-bodies-striped>tbody:nth-child(even)>tr>td,
+.table-bodies-striped>tbody:nth-child(even)>tr>th {
+    background-color: #f9f9f9;
+}
+.btn-group {}
 #checkbox-container {margin-top:0.5cm}

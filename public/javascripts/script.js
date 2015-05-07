@@ -1,67 +1,25 @@
 var loadedTriples = {"left":null, "right":null};
+var version;
 var byObject = false;
+var compareMode = false;
 
-/**
- * When the version selector for the left side of the table has been clicked
- */
-$('#versionselLeft li').on('click', function(){
-    var version = versionSelectorClicked($(this));
-    getTriples(version, "left");
+$('#versions button').click(function() {
+    versionButtonClicked($(this));
 });
 
+initializeSwitches();
+clickLastVersion();
+
 /**
- * When the version selector for the right side of the table has been clicked
+ * Sets a new version after a version button has been clicked
+ * @param button
  */
-$('#versionselRight li').on('click', function(){
-    var version = versionSelectorClicked($(this));
+function versionButtonClicked(button) {
+    button.addClass('active').siblings().removeClass('active');
+    version = button.attr("value");
     getTriples(version, "right");
-});
-
-/**
- * Refreshes the view when a selector has been clicked
- * @param version   the new version
- * @param selector  the selector that has been changed
- */
-function versionSelectorClicked(selector) {
-    var version = selector.text();
-    updateVersionSelector(version, selector);
-    return version;
-}
-
-/**
- * Updates triples and decides whether to display the view for a single selected version or a diff view for two versions
- * @param versionLeft   left selected version or undefined, if none
- * @param versionRight  right selected version or undefined, if none
- * @param byObject      true means grouping by object, otherwise grouping by predicate
- */
-function update() {
-    var leftTriplesGrouped = groupTriples(loadedTriples.left, byObject);
-    var rightTriplesGrouped =  groupTriples(loadedTriples.right, byObject);
-    if(leftTriplesGrouped !== null && rightTriplesGrouped !== null) {   //two versions are selected, compare between them
-        var mergedGroups = compareGroups(leftTriplesGrouped, rightTriplesGrouped);
-        renderTable(mergedGroups, true);
-    }
-    else if(leftTriplesGrouped !== null) //only the left version is selected, disable visual comparison
-        renderTable(leftTriplesGrouped, false);
-    else //rightTriplesGrouped !== null, only the right version is selected, ...
-        renderTable(rightTriplesGrouped, false);
-}
-
-/**
- * Renders the HTML table with the given triples
- * @param mergedGroups
- * @param compareMode   whether to display the view for a single selected version or a diff view for two versions
- */
-function renderTable(mergedGroups, compareMode) {
-    // get placeholder to render the table
-    var tripleListPlaceholder = $('#tripleListPlaceholder');
-    // create template function for table
-    var tripleListTemplate = _.template($('#tripleListTemplate').html());
-    // create template function for single values, to render a single literal or uri
-    var valueTemplate = _.template($('#valueTemplate').html());
-    // render the table
-    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueTemplate:valueTemplate}));
-    initializeSwitch();
+    if(compareMode)
+        enablePredecessor();
 }
 
 /**
@@ -70,12 +28,13 @@ function renderTable(mergedGroups, compareMode) {
  * @param attribute     the index within loadedTriples to store the triples
  */
 function getTriples(version, attribute) {
+    loadedTriples[attribute] = null;
     var path = window.location.pathname + "/" + version + "/plain";
     $.get( path, function( data ) {
         var triples = parser.parse(data);
         postprocessParsedTriples(triples);
         loadedTriples[attribute] = triples;
-        update();
+        updateView();
     } );
 }
 
@@ -102,11 +61,9 @@ function postprocessParsedTriples(object) {
  *
  * @param triples   triples in form of [{predicate:..., object:...}, {predicate:..., object:...}, ...]
  * @param byObject  if true, group per object, otherwise by predicate
- * @returns {Array} of form [{key:..., values:[...]}, {key:..., values:[...]}, ...]. null if given triples are null
+ * @returns {Array} of form [{key:..., values:[...]}, {key:..., values:[...]}, ...].
  */
 function groupTriples(triples, byObject) {
-    if(triples === null)
-        return null;
     //the view should be groupable by predicate or by object. Therefore, the mapping which is created here has either predicate or object as key.
     //to simplify comparisons of two versions, for each of the versions all keys and their respective values are sorted alphabetically
 
@@ -253,34 +210,96 @@ function compareGroups(leftTriplesGrouped, rightTriplesGrouped) {
 }
 
 /**
- * Initializes the switch to toggle between object-wise and predicate-wise grouping, this happens
- * only the first time the function is called
+ * Updates triples and decides whether to display the view for a single selected version or a diff view for two versions
  */
-function initializeSwitch() {
-    var theSwitch = $("[name='group-by-checkbox']");
-    if(theSwitch.parent().css('visibility') == 'hidden') {
-        theSwitch.parent().css('visibility', 'visible');
-        theSwitch.bootstrapSwitch({
-            onText: 'Object',
-            offText: 'Predicate',
-            onColor: 'success',
-            offColor: 'primary'
-        });
-        theSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
-            console.log(state);
-            byObject = state;
-            update();
-        });
+function updateView() {
+    if(loadedTriples.right !== null) {
+        if (compareMode) {
+            var leftTriplesGrouped = groupTriples(loadedTriples.left, byObject);
+            var rightTriplesGrouped = groupTriples(loadedTriples.right, byObject);
+            var groups = compareGroups(leftTriplesGrouped, rightTriplesGrouped);
+        }
+        else {
+            var groups = groupTriples(loadedTriples.right, byObject);
+        }
+        renderTable(groups, compareMode);
     }
 }
 
 /**
- * Updates the text of the version selector
- * @param version
- * @param element
+ * Renders the HTML table with the given triples
+ * @param mergedGroups
+ * @param compareMode   whether to display the view for a single selected version or a diff view for two versions
  */
-function updateVersionSelector(version, element) {
-    element.parents('.dropdown').find('.dropdown-toggle').html(version+' <span class="caret"></span>');
+function renderTable(mergedGroups) {
+    // get placeholder to render the table
+    var tripleListPlaceholder = $('#tripleListPlaceholder');
+    // create template function for table
+    var tripleListTemplate = _.template($('#tripleListTemplate').html());
+    // create template function for single values, to render a single literal or uri
+    var valueTemplate = _.template($('#valueTemplate').html());
+    // render the table
+    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueTemplate:valueTemplate}));
+}
+
+/**
+ * Initializes the switch to toggle between object-wise and predicate-wise grouping, this happens
+ * only the first time the function is called
+ */
+function initializeSwitches() {
+    var groupBySwitch = $("[name='group-by-checkbox']");
+    groupBySwitch.bootstrapSwitch({
+        onText: 'Object',
+        offText: 'Predicate',
+        onColor: 'success',
+        offColor: 'primary'
+    });
+    groupBySwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+        byObject = state;
+        updateView();
+    });
+    var compareSwitch = $("[name='compare-checkbox']");
+    compareSwitch.bootstrapSwitch();
+    compareSwitch.on('switchChange.bootstrapSwitch', function (event, state) {
+        compareMode = state;
+        if(compareMode)
+            enablePredecessor();
+        else
+            updateView();
+    });
+}
+
+/**
+ * selects the last existing version for the entity
+ */
+function clickLastVersion() {
+    $('#versions button').filter(".btn-primary").last().trigger('click');
+}
+
+/**
+ *
+ */
+function enablePredecessor() {
+    var predecessorVersion = getPredecessorVersion();
+    if(predecessorVersion !== undefined && versionIsActive(predecessorVersion)) {
+        getTriples(predecessorVersion, "left");
+    }
+    else {
+        loadedTriples.left = [];
+        updateView();
+    }
+}
+
+/**
+ * searches for the predecessor version for the current one
+ * @returns string of version name. undefined if the version is the first
+ */
+function getPredecessorVersion() {
+    return $("#versions").find(".active").prev().attr("value");
+}
+
+function versionIsActive(ver) {
+    return $("#versions").find("[value='" + ver + "']").hasClass("btn-primary");
 }
 
 var prefixes = {

@@ -37,6 +37,14 @@ public class Triple {
 		return result;
 	}
 
+    /**
+     * Returns all known versions
+     * @return
+     */
+    public static List<String> getAllVersions() {
+        return Play.application().configuration().getStringList("versions");
+    }
+
 	//builds part of path between version folder and entity file (e.g. /dbr/VO/Vodafone)
 	public static String getFilePathForVersionPath(String versionPath, String entity) {
 		return  versionPath + "/dbr/"

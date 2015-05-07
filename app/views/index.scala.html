@@ -1,36 +1,29 @@
-@(resource: String)(versions: List[String])
+@(entity: String)(versions: List[String])(allVersions: List[String])
 
 @main("DBpedia-diff") {
 
     <div class="container">
         <div class="starter-template">
-            <h1>@controllers.Application.decodeEntity(resource)</h1>
-            <p class="lead"><a href="http://dbpedia.org/page/@resource">
-                http://dbpedia.org/page/@controllers.Application.decodeEntity(resource)
+            <h1>@controllers.Application.decodeEntity(entity)</h1>
+            <p class="lead"><a href="http://dbpedia.org/resource/@entity">
+                http://dbpedia.org/resource/@controllers.Application.decodeEntity(entity)
             </a></p>
             <p>
-            <div class="dropdown inline" style="float:right" >
-                <button class="btn btn-default dropdown-toggle" type="button" id="menu1" data-toggle="dropdown">
-                    Choose version
-                    <span class="caret"></span></button>
-                <ul id="versionselRight" class="dropdown-menu" role="menu" aria-labelledby="menu1">
-                @for(version <- versions) {
-                    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">@version</a></li>
+            <div id="versions" class="btn-group">
+                @for(version <- allVersions) {
+                    <button type="button"  value="@version" class="btn@{if (versions.contains(version)) " btn-primary" else " btn-disabled"}">
+                        @version
+                    </button>
                 }
-                </ul>
             </div>
-            <div class="dropdown inline">
-                <button class="btn btn-default dropdown-toggle" type="button" id="menu2" data-toggle="dropdown">
-                    Choose version
-                    <span class="caret"></span></button>
-                <ul id="versionselLeft" class="dropdown-menu" role="menu" aria-labelledby="menu2">
-                @for(version <- versions) {
-                    <li role="presentation"><a role="menuitem" tabindex="-1" href="#">@version</a></li>
-                }
-                </ul>
+            <p>
+
+            <div id="checkbox-container" class="inline">
+                <p>Compare with predecessor</p>
+                <input type="checkbox" name="compare-checkbox">
             </div>
 
-            <div id="checkbox-container" style="visibility: hidden">
+            <div id="checkbox-container" class="inline">
                 <p>Group by...</p>
                 <input type="checkbox" name="group-by-checkbox">
             </div>
@@ -43,29 +36,27 @@
     <script type="text/html" id='tripleListTemplate'>
 
 
-        <table class="table">
+        <table class="table table-bodies-striped">
         <thead><tr>
             <th class="col-md-5"></th>
             <th class="col-md-1"></th>
             <th class="col-md-5"></th>
         </tr></thead>
-            <%
-            _.each(data,function(group,key,list){ %>
+            <%_.each(data,function(group,key){ %>
+            <%var keyRepresentation = valueTemplate({value:group.key})%>
             <tbody >
-
-                <tr class="heading"><td colspan="3"><%= valueTemplate({value:group.key})%></td></tr>
                 <% _.each(group.values,function(value,keyV,listV){
                     var representation = valueTemplate({value:value});
                     if (!value.right && compareMode) { %>
-                        <tr><td class="right"><%= representation%></td>
+                        <tr><td class="right"><%= keyRepresentation%><%= representation%></td>
                         <td class="center"><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
                         <td></td></tr> <% }
                     else if (!value.left && compareMode) { %>
                         <tr><td></td>
                         <td class="center"><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
-                        <td><%= representation%></td></tr> <% }
+                        <td><%= keyRepresentation%><%= representation%></td></tr> <% }
                     else { %>
-                        <tr><td colspan="3" class="center"><%= representation%></td></tr> <% } %>
+                        <tr><td colspan="3" class="center"><%= keyRepresentation%><%= representation%></td></tr> <% } %>
                 <% }); %>
             </tbody>
             <% }); %>
@@ -74,13 +65,18 @@
 
     <script type="text/html" id='valueTemplate'>
         <% if(value.node === "iri") { %>
-            <a href ="<%=value.plain%>"> <% } %>
+            <a href ="<%=value.plain%>">
         <% if(value.prefix !== undefined && value.suffix !== undefined) { %>
             <%= value.prefix%>:<%=value.suffix%> <% }
+            else { %>
+                <%= value.plain %>
+            <% } %>
+            </a>
+        <% }
         else { %>
-            <%= value.plain %> <% } %>
+            &quot;<%= value.plain %>&quot; <% } %>
         <% if(value.node === "iri") { %>
-            </a> <% } %>
+            <% } %>
     </script>
 
 }
