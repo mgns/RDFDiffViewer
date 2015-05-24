@@ -11,14 +11,24 @@ initializeSwitches();
 clickLastVersion();
 
 /**
- * Sets a new version after a version button has been clicked
+ * Sets a new version after a version button has been clicked, checks if version exists
  * @param button
  */
 function versionButtonClicked(button) {
     button.addClass('active').siblings().removeClass('active');
-    version = button.attr("value");
+    var requestedVersion = button.attr("value");
+    if(versionIsActive(requestedVersion)) {
+        loadVersion(requestedVersion);
+    }
+}
+
+/**
+ * Loads a new version and also requests the predecessor version if required
+ */
+function loadVersion(requestedVersion) {
+    version = requestedVersion;
     getTriples(version, "right");
-    if(compareMode)
+    if (compareMode)
         enablePredecessor();
 }
 
@@ -230,17 +240,30 @@ function compareGroups(leftTriplesGrouped, rightTriplesGrouped) {
  * Updates triples and decides whether to display the view for a single selected version or a diff view for two versions
  */
 function updateView() {
-    if(loadedTriples.right !== null) {
-        var rightTriplesGrouped = groupTriples(loadedTriples.right, byObject);
-        if (compareMode) {
-            var leftTriplesGrouped = groupTriples(loadedTriples.left, byObject);
-            var groups = compareGroups(leftTriplesGrouped, rightTriplesGrouped);
-        }
-        else {
-            groups = compareGroups([], rightTriplesGrouped);
-        }
-        renderTable(groups, compareMode);
+    if (compareMode && loadedTriples.right !== null && loadedTriples.left !== null) {
+        updateViewCompareMode();
     }
+    else if (!compareMode && loadedTriples.right !== null){
+        updateViewSimpleMode();
+    }
+}
+
+/**
+ * updates the diff view, requires both triple sets to be loaded
+ */
+function updateViewCompareMode() {
+    var rightTriplesGrouped = groupTriples(loadedTriples.right, byObject);
+    var leftTriplesGrouped = groupTriples(loadedTriples.left, byObject);
+    var groups = compareGroups(leftTriplesGrouped, rightTriplesGrouped);
+    renderTable(groups, false);
+}
+/**
+ * updates the non-diff-view
+ */
+function updateViewSimpleMode() {
+    var rightTriplesGrouped = groupTriples(loadedTriples.right, byObject);
+    var groups = compareGroups([], rightTriplesGrouped);
+    renderTable(groups, true);
 }
 
 /**
