@@ -105,9 +105,8 @@ function groupTriples(triples, byObject) {
 }
 
 /**
- * Merges two grouped collections of triples as returned by groupTriples into one list
- * Each value gets an additional "left" or "right" attribute set to true if it occurs in the version selected on the
- * left or right side, respectively
+ * Compares two grouped collections of triples as returned by groupTriples into one list
+ * Returns for each predicate the objects on the left and right side, common attributes of both sides first
  * @param leftTriplesGrouped
  * @param rightTriplesGrouped
  * @returns {Array}
@@ -118,94 +117,112 @@ function compareGroups(leftTriplesGrouped, rightTriplesGrouped) {
     var leftLength = leftTriplesGrouped.length;
     var rightLength = rightTriplesGrouped.length;
     var result = [];
+    var leftGroup, leftKeyPlain, rightGroup, rightKeyPlain;
+
     //the ordered lists for the old and new version are traversed synchronously
     while(leftPos < leftLength && rightPos < rightLength) {
-        var leftGroup = leftTriplesGrouped[leftPos];
-        var leftKeyPlain = leftGroup.key.plain;
-        var rightGroup = rightTriplesGrouped[rightPos];
-        var rightKeyPlain = rightGroup.key.plain;
+        leftGroup = leftTriplesGrouped[leftPos];
+        leftKeyPlain = leftGroup.key.plain;
+        rightGroup = rightTriplesGrouped[rightPos];
+        rightKeyPlain = rightGroup.key.plain;
 
         if(leftKeyPlain === rightKeyPlain) {
-            rightGroup.values = mergeGroupValues(leftGroup, rightGroup);
-            result.push(rightGroup);
-            leftPos++;
-            rightPos++;
+            addCommonGroup();
         }
         else if (leftKeyPlain < rightKeyPlain) {
-            addAllLeftValues();
+            addGroupLeft();
         }
         else { //leftKeyPlain > rightKeyPlain
-            addAllRightValues();
+            addGroupRight();
         }
     }
     while(leftPos < leftLength) {
-        addAllLeftValues();
+        leftGroup = leftTriplesGrouped[leftPos];
+        addGroupLeft();
     }
     while(rightPos < rightLength) {
-        addAllRightValues();
+        rightGroup = rightTriplesGrouped[rightPos];
+        addGroupRight();
     }
 
     return result;
 
+    function addCommonGroup() {
+        result.push(mergeGroupValues(leftGroup.values, rightGroup.values, leftGroup.key));
+        leftPos++;
+        rightPos++;
+    }
+
+    function addGroupLeft() {
+        result.push(mergeGroupValues(leftGroup.values, [], leftGroup.key));
+        leftPos++;
+    }
+
+    function addGroupRight() {
+        result.push(mergeGroupValues([], rightGroup.values, rightGroup.key));
+        rightPos++;
+    }
 
     //merges the values for two groups of the same key, indicating on which of the two sides the value is present
-    function mergeGroupValues(leftGroup, rightGroup) {
+    function mergeGroupValues(leftValues, rightValues, key) {
         var leftValuePos = 0;
         var rightValuePos = 0;
-        var leftValueNumber = leftGroup.values.length;
-        var rightValueNumber = rightGroup.values.length;
-        var groupResult = [];
+        var leftValueNumber = leftValues.length;
+        var rightValueNumber = rightValues.length;
+
+        var group = {"left":[], "right":[], "key":key};
+        var leftOnlyValues = [];
+        var rightOnlyValues = [];
+        var leftValue, leftValuePlain, rightValue, rightValuePlain;
 
         //parallel iteration of left and right sorted values for the key, merging into one list which is sorted as well
         while(leftValuePos < leftValueNumber && rightValuePos < rightValueNumber) {
-            var leftValue = leftGroup.values[leftValuePos];
-            var leftValuePlain = leftValue.plain;
-            var rightValue = rightGroup.values[rightValuePos];
-            var rightValuePlain = rightValue.plain;
+            leftValue = leftValues[leftValuePos];
+            leftValuePlain = leftValue.plain;
+            rightValue = rightValues[rightValuePos];
+            rightValuePlain = rightValue.plain;
 
             if(leftValuePlain === rightValuePlain) {
-                leftValue.left = true;
-                leftValue.right = true;
-                groupResult.push(leftValue);
-                leftValuePos++;
-                rightValuePos++;
+                addCommonValue();
             }
             else if (leftValuePlain < rightValuePlain) {
-                leftValue.left = true;
-                groupResult.push(leftValue);
-                leftValuePos++;
+                addValueLeft();
             }
             else { //leftValuePlain > rightValuePlain
-                rightValue.right = true;
-                groupResult.push(rightValue);
-                rightValuePos++;
+                addValueRight();
             }
         }
         while(leftValuePos < leftValueNumber) {
-            var groupValues = leftGroup.values[leftValuePos++];
-            groupValues.left = true;
-            groupResult.push(groupValues);
+            leftValue = leftValues[leftValuePos];
+            addValueLeft();
         }
         while(rightValuePos < rightValueNumber) {
-            groupValues = rightGroup.values[rightValuePos++];
-            groupValues.right = true;
-            groupResult.push(groupValues);
+            rightValue = rightValues[rightValuePos];
+            addValueRight();
         }
-        return groupResult;
-    }
+        group.left = group.left.concat(leftOnlyValues);
+        group.right = group.right.concat(rightOnlyValues);
+        return group;
 
-    function addAllLeftValues() {
-        var group = leftTriplesGrouped[leftPos++];
-        for(var i=0; i<group.values.length;i++)
-            group.values[i].left = true;
-        result.push(group);
-    }
+        function addCommonValue() {
+            leftValue.unequal = rightValue.unequal = false;
+            group.left.push(leftValue);
+            group.right.push(rightValue);
+            leftValuePos++;
+            rightValuePos++;
+        }
 
-    function addAllRightValues() {
-        var group = rightTriplesGrouped[rightPos++];
-        for(var i=0; i<group.values.length;i++)
-            group.values[i].right = true;
-        result.push(group);
+        function addValueLeft() {
+            leftValue.unequal = true;
+            leftOnlyValues.push(leftValue);
+            leftValuePos++;
+        }
+
+        function addValueRight() {
+            rightValue.unequal = true;
+            rightOnlyValues.push(rightValue);
+            rightValuePos++;
+        }
     }
 }
 
@@ -214,13 +231,13 @@ function compareGroups(leftTriplesGrouped, rightTriplesGrouped) {
  */
 function updateView() {
     if(loadedTriples.right !== null) {
+        var rightTriplesGrouped = groupTriples(loadedTriples.right, byObject);
         if (compareMode) {
             var leftTriplesGrouped = groupTriples(loadedTriples.left, byObject);
-            var rightTriplesGrouped = groupTriples(loadedTriples.right, byObject);
             var groups = compareGroups(leftTriplesGrouped, rightTriplesGrouped);
         }
         else {
-            var groups = groupTriples(loadedTriples.right, byObject);
+            groups = compareGroups([], rightTriplesGrouped);
         }
         renderTable(groups, compareMode);
     }
@@ -236,10 +253,12 @@ function renderTable(mergedGroups) {
     var tripleListPlaceholder = $('#tripleListPlaceholder');
     // create template function for table
     var tripleListTemplate = _.template($('#tripleListTemplate').html());
+    //create template to render the list of white, red or green values
+    var valueListTemplate = _.template($('#valueListTemplate').html());
     // create template function for single values, to render a single literal or uri
     var valueTemplate = _.template($('#valueTemplate').html());
     // render the table
-    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueTemplate:valueTemplate}));
+    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueListTemplate: valueListTemplate, valueTemplate:valueTemplate}));
 }
 
 /**

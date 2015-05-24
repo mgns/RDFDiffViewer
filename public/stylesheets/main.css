@@ -1,10 +1,10 @@
-.heading {text-align: center; font-weight: bold;}
-.center {text-align: center;}
-.right {text-align:right;}
 .inline {display:inline-block;margin-right: 30px;margin-bottom: 10px}
-.table-bodies-striped>tbody:nth-child(even)>tr>td,
-.table-bodies-striped>tbody:nth-child(even)>tr>th {
-    background-color: #f9f9f9;
-}
-.btn-group {}
+.list-item{padding:5px;}
+.left[unequal=true]{background-color:#FFECEC;}
+.right[unequal=true]{background-color:#EAFFEA;}
+.comparatorColumn{width:20px; vertical-align:top; text-align:center}
 #checkbox-container {margin-top:0.5cm}
+/* diable bootstrap table cell margin */
+.table > tbody > tr > td, .table > tbody > tr > th, .table > tfoot > tr > td, .table > tfoot > tr > th, .table > thead > tr > td, .table > thead > tr > th {
+    padding: 0px;
+}

@@ -34,33 +34,59 @@
 
 
     <script type="text/html" id='tripleListTemplate'>
-
-
-        <table class="table table-bodies-striped">
+        <table class="table">
         <thead><tr>
             <th class="col-md-5"></th>
-            <th class="col-md-1"></th>
             <th class="col-md-5"></th>
         </tr></thead>
-            <%_.each(data,function(group,key){ %>
-            <%var keyRepresentation = valueTemplate({value:group.key})%>
-            <tbody >
-                <% _.each(group.values,function(value,keyV,listV){
-                    var representation = valueTemplate({value:value});
-                    if (!value.right && compareMode) { %>
-                        <tr><td class="right"><%= keyRepresentation%><%= representation%></td>
-                        <td class="center"><image src="@routes.Assets.at("images/famfamfam/delete.png")"></td>
-                        <td></td></tr> <% }
-                    else if (!value.left && compareMode) { %>
-                        <tr><td></td>
-                        <td class="center"><image src="@routes.Assets.at("images/famfamfam/add.png")"></td>
-                        <td><%= keyRepresentation%><%= representation%></td></tr> <% }
-                    else { %>
-                        <tr><td colspan="3" class="center"><%= keyRepresentation%><%= representation%></td></tr> <% } %>
-                <% }); %>
+            <%
+            _.each(data,function(block){ %>
+            <tbody>
+            <%
+            var left = valueListTemplate({key:block.key, values:block.left, compareMode:compareMode,
+                                            side:"left", valueTemplate:valueTemplate});
+            var right = valueListTemplate({key:block.key, values:block.right, compareMode:compareMode,
+                                            side:"right", valueTemplate:valueTemplate});
+
+            if(compareMode) { %>
+                <tr>
+                    <td><%= left%></td>
+                    <td><%= right%></td>
+                </tr>
+            <% }
+            else { %>
+                <tr>
+                    <td colspan="2"><%= right%></td>
+                </tr>
+            <% } %>
             </tbody>
             <% }); %>
         </table>
+    </script>
+
+    <script type="text/html" id='valueListTemplate'>
+        <%
+        var keyRepresentation = valueTemplate({value:key});
+        _.each(values, function(value) { %>
+            <div class="list-item <%=side%>"
+                <% if(compareMode){ %> unequal="<%=value.unequal%>" <% } %>
+            >
+                <table>
+                    <% if(compareMode) { %>
+                        <td class="comparatorColumn">
+                        <% if(value.unequal) {
+                            if(side === "left") { %>
+                                -
+                            <% } else { %>
+                                +
+                            <% }
+                        } %>
+                        </td>
+                    <% } %>
+                    <td><%=keyRepresentation%> <%=valueTemplate({value:value})%></td>
+                </table>
+            </div>
+        <% }); %>
     </script>
 
     <script type="text/html" id='valueTemplate'>
