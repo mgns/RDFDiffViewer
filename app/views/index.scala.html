@@ -41,14 +41,14 @@
         </tr></thead>
             <%
             _.each(data,function(block){ %>
-            <tbody>
             <%
-            var left = valueListTemplate({key:block.key, values:block.left, compareMode:compareMode,
-                                            side:"left", valueTemplate:valueTemplate});
-            var right = valueListTemplate({key:block.key, values:block.right, compareMode:compareMode,
-                                            side:"right", valueTemplate:valueTemplate});
-
-            if(compareMode) { %>
+            var left = templates.valueListTemplate({key:block.key, values:block.left, compareMode:compareMode, side:"left",
+                                            flipKeyValue:flipKeyValue, templates:templates});
+            var right = templates.valueListTemplate({key:block.key, values:block.right, compareMode:compareMode, side:"right",
+                                            flipKeyValue:flipKeyValue, templates:templates});
+            %>
+            <tbody>
+            <% if(compareMode) { %>
                 <tr>
                     <td><%= left%></td>
                     <td><%= right%></td>
@@ -66,27 +66,29 @@
 
     <script type="text/html" id='valueListTemplate'>
         <%
-        var keyRepresentation = valueTemplate({value:key});
-        _.each(values, function(value) { %>
-            <div class="list-item <%=side%>"
-                <% if(compareMode){ %> unequal="<%=value.unequal%>" <% } %>
-            >
+        _.each(values, function(value) {
+            var keyValuePair=templates.keyValuePairTemplate({key:key, value:value, flipKeyValue:flipKeyValue, templates:templates});
+            var unequalitySymbol = (side === "right" ? "+" : "-");
+            var comparatorColumnContent = (value.unequal ? unequalitySymbol : "");
+            var unequalityAttribute = (compareMode ? "unequal="+value.unequal : "");
+            var comparatorColumn = (compareMode ? '<td class="comparatorColumn">' + comparatorColumnContent + '</td>' : ""); %>
+            <div class="list-item <%=side%>" <%=unequalityAttribute%> >
                 <table>
-                    <% if(compareMode) { %>
-                        <td class="comparatorColumn">
-                        <% if(value.unequal) {
-                            if(side === "left") { %>
-                                -
-                            <% } else { %>
-                                +
-                            <% }
-                        } %>
-                        </td>
-                    <% } %>
-                    <td><%=keyRepresentation%> <%=valueTemplate({value:value})%></td>
+                    <%=comparatorColumn%>
+                    <td><%=keyValuePair%></td>
                 </table>
             </div>
         <% }); %>
+    </script>
+
+    <script type="text/html" id="keyValuePairTemplate">
+        <% var keyRepresentation = templates.valueTemplate({value:key});
+        var valueRepresentation = templates.valueTemplate({value:value});
+        if(!flipKeyValue) { %>
+            <%=keyRepresentation%> <%=valueRepresentation%>
+        <% } else { %>
+            <%=valueRepresentation%> <%=keyRepresentation%>
+        <% } %>
     </script>
 
     <script type="text/html" id='valueTemplate'>

@@ -253,12 +253,17 @@ function renderTable(mergedGroups) {
     var tripleListPlaceholder = $('#tripleListPlaceholder');
     // create template function for table
     var tripleListTemplate = _.template($('#tripleListTemplate').html());
-    //create template to render the list of white, red or green values
+    // create template to render the list of white, red or green values
     var valueListTemplate = _.template($('#valueListTemplate').html());
+    // create template to ensure "predicate object" is rendered and not "object predicate"
+    var keyValuePairTemplate = _.template($('#keyValuePairTemplate').html());
     // create template function for single values, to render a single literal or uri
     var valueTemplate = _.template($('#valueTemplate').html());
+    // dict of templates to be used nested within other templates
+    var templates = {valueListTemplate:valueListTemplate, keyValuePairTemplate:keyValuePairTemplate, valueTemplate:valueTemplate};
     // render the table
-    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, valueListTemplate: valueListTemplate, valueTemplate:valueTemplate}));
+    tripleListPlaceholder.html(tripleListTemplate({data: mergedGroups, compareMode: compareMode, flipKeyValue:byObject,
+        templates:templates}));
 }
 
 /**
